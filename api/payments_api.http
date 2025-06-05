@@ -1,0 +1,15 @@
+### GET request to example server
+GET http://localhost:8000/api/v1/payments/abc
+
+###
+
+###
+POST http://localhost:8000/api/v1/payments/
+Content-Type: application/json
+
+{
+    "customer_name": "John Doe",
+    "customer_email": "john@example.com",
+    "amount": 50.00
+}
+###
