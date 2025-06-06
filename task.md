@@ -2,7 +2,10 @@
 
 ## **Objective**
 
-Create a basic RESTful API that enables small businesses to accept payments from customers using payment gateways such as PayPal, Paystack, or Flutterwave. The API should focus on minimal customer information, including:
+Create a basic RESTful API that enables small businesses to accept payments from customers 
+using payment gateways such as PayPal, Paystack, or Flutterwave. 
+
+The API should focus on minimal customer information, including:
 
 - Name
 - Email
