@@ -70,6 +70,12 @@ class GetPaymentStatusViewTests(SimpleTestCase):
         self.assertEqual(response_data["data"]["reference"], self.valid_payment_id)
         self.assertEqual(response_data["status"], True)
 
+    def test_invalid_id(self):
+        """Test get_payment_status with invalid payment ID"""
+        url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.invalid_payment_id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_post_method(self):
         """Test get_payment_status with the POST method (should fail)"""
         url = reverse(payment_status_url_view_name, kwargs={"payment_id": "m392r2dbbn"})

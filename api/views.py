@@ -11,12 +11,14 @@ from api.serializers import PaymentInfo, PaystackTransactionInitResponse
 
 PAYSTACK_API_URL = "https://api.paystack.co"
 
+
 def get_paystack_client():
     headers = {
         "Authorization": f"Bearer {os.environ.get('PAYSTACK_TEST_SECRET_KEY')}",
         "Content-Type": "application/json",
     }
     return httpx.Client(base_url=PAYSTACK_API_URL, headers=headers)
+
 
 @csrf_exempt
 def initialize_payment(request: HttpRequest):
@@ -57,12 +59,22 @@ def get_payment_status(request: HttpRequest, payment_id: str):
     with get_paystack_client() as client:
         # Call Paystack API to retrieve payment status
         response = client.get(f"/transaction/verify/{payment_id}")
-        if not response.is_success:
-            return JsonResponse(
-                {"payment_id": payment_id,"status": "failed"},
-                status=status.HTTP_400_BAD_REQUEST)
+        print(f"{response.status_code=}")
 
         data = response.json()
+        if not response.is_success:
+            if data["code"] == "transaction_not_found":
+                return JsonResponse(
+                    {
+                        "payment_id": payment_id,
+                        "status": "failed",
+                        "message": "Payment with the given payment id not found"
+                    },
+                    status=status.HTTP_404_NOT_FOUND)
+            return JsonResponse(
+                {"payment_id": payment_id, "status": "failed"},
+                status=status.HTTP_400_BAD_REQUEST)
+
         serializer = PaystackTransactionStatusResponse(data=data)
         if not serializer.is_valid():
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
