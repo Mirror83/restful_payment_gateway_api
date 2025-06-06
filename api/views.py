@@ -12,7 +12,6 @@ def initialize_payment(request: HttpRequest):
         serializer = PaymentInfo(data=data)
         if serializer.is_valid():
             validated_data = serializer.validated_data
-            print(validated_data["amount"] * 100)
             return JsonResponse(validated_data)
         else:
             return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -21,7 +20,6 @@ def initialize_payment(request: HttpRequest):
 
 def get_payment_status(request: HttpRequest, payment_id: str):
     if request.method == "GET":
-        print(f"{payment_id=}")
         return JsonResponse({"payment_id": payment_id,"status": "success"})
 
     return HttpResponse(status=status.HTTP_405_METHOD_NOT_ALLOWED)
