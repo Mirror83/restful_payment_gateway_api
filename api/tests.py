@@ -5,7 +5,7 @@ from rest_framework import status
 import json
 
 init_payment_url = reverse("api:initialize_payment")
-payment_status_url = reverse("api:get_payment_status", kwargs={"payment_id": "test-payment-123"})
+payment_status_url_view_name = "api:get_payment_status"
 
 
 class InitPaymentViewTests(SimpleTestCase):
@@ -26,7 +26,7 @@ class InitPaymentViewTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
-        self.assertIn('amount', response_data)
+        self.assertTrue(response_data['status'])
 
     def test_empty_data(self):
         """Test initialize_payment with empty data"""
@@ -50,7 +50,7 @@ class InitPaymentViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_method(self):
-        """Test initialize_payment with GET method (should fail)"""
+        """Test initialize_payment with the GET method (should fail)"""
         response = self.client.get(init_payment_url)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -58,17 +58,20 @@ class InitPaymentViewTests(SimpleTestCase):
 class GetPaymentStatusViewTests(SimpleTestCase):
     def setUp(self):
         self.client = Client()
+        self.valid_payment_id = "m392r2dbbn"
+        self.invalid_payment_id = "test-payment-id"
 
     def test_valid_id(self):
         """Test get_payment_status with valid payment ID"""
-        payment_id = "m392r2dbbn"
-        response = self.client.get(payment_status_url)
+        url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.valid_payment_id})
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
-        self.assertEqual(response_data['payment_id'], payment_id)
-        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data["data"]["reference"], self.valid_payment_id)
+        self.assertEqual(response_data["status"], True)
 
     def test_post_method(self):
-        """Test get_payment_status with POST method (should fail)"""
-        response = self.client.post(payment_status_url)
+        """Test get_payment_status with the POST method (should fail)"""
+        url = reverse(payment_status_url_view_name, kwargs={"payment_id": "m392r2dbbn"})
+        response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
