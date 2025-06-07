@@ -167,3 +167,7 @@ To deploy:
    `On commit` to `After CI checks pass` to prevent deployment when the tests 
    (the only check in the CI currently) fail.
 
+**N/B:** If your service does not get traffic frequently, Render puts the service to sleep
+(if you are on the free plan), so sometimes you may get a `502 Bad Gateway` 
+for a few minutes before the service is restarted.
+
