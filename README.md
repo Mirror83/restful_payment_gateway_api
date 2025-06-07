@@ -152,7 +152,6 @@ To deploy:
    - In the security section of the sidebar select *Secrets and Variables* and then click *Actions*
    - Click the *Secrets* tab
    - Create a new secret with the key `PAYSTACK_TEST_SECRET_KEY` and the actual key as the value.
-      - TODO: Add steps
    
    This is necessary because the GitHub Actions 
    [workflow for testing the Django application](.github/workflows/django.yml) 
