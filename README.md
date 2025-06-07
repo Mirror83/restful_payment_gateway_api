@@ -1,6 +1,9 @@
 # Payment Gateway API for Small Businesses
 This is an API being built according to the specification in [this file](task.md)
 
+The `api` package contains the application code,
+`restful_payment_gateway_api` package contains configuration for the Django project.
+
 The API is hosted on [Render](https://render.com/) at https://restful-payment-gateway-api.onrender.com.
 It has the following two endpoints as per the [specification](task.md):
 - GET `/api/v1/payments/{id}`
@@ -92,6 +95,43 @@ You should get a response similar to this:
 ```
    
 ## Tests
+The tests are written using the Django testing framework, and this application
+consists of a test class for each view (i.e. endpoint, of which there are two at the moment).
+The test classes are subclasses of `django.test.SimpleTestCase` instead of the more common
+`django.test.TestCase` since none of the tests require database access.
 
+The test can be divided into the following categories:
+1. Validation for incorrect request methods
+2. Validation for incorrect input parameters
+3. Validation for correct input parameters
+
+A note about the tests (some in category 2 and all that fall under 3)
+is that they make actual calls to the Paystack API, as the calls to
+the Paystack API are not mocked. I was thinking of mocking them, but there's no need since 
+the payments are simulated in the provider's test environment.
+
+However, this means that an internet connection is required for the tests to pass, and the
+PAYSTACK_TEST_SECRET_KEY environment variable must be set to a valid value.
+
+The tests can be run as follows (ensure the virtual environment is activated first):
+```bash
+python manage.py test
+```
+
+Alternatively, you can use your IDE to run the tests if you have configured it to do so.
+
+**N/B:** Make sure to replace the value for `self.valid_payment_id` here:
+```python
+from django.test import SimpleTestCase, Client
+class GetPaymentStatusViewTests(SimpleTestCase):
+    def setUp(self):
+        self.client = Client()
+        self.valid_payment_id = "m392r2dbbn"  # Replace this
+        self.invalid_payment_id = "test-payment-id"
+```
+
+Do so with a reference you get from calling the Initialise Payment endpoint
+with your own Paystack test secret key.
 
 ## Deployment
+
