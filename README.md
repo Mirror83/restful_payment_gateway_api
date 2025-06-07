@@ -72,7 +72,7 @@ You should get a response that looks like this:
 This is basically the response from the Paystack 
 [initialise Payment API](https://paystack.com/docs/api/transaction/#initialize).
 If you follow the link on the authorisation URL, you'll be taken to the following page:
-![Placeholder image](placeholder.png)
+![Test Checkout Page](test-checkout-page.png)
 
 The page is a test checkout page where you can simulate different payment conditions with different payment channels.
 Afterwards, you can try hitting the get payment status `GET` endpoint (`api/v1/payments/{id})` endpoint.
@@ -148,6 +148,10 @@ To deploy:
    Create the repository, and before continuing the deployment process, you need to add the Paystack test secret
    key as a repository secret.
    To do this:
+   - Got to the settings page of your repository
+   - In the security section of the sidebar select *Secrets and Variables* and then click *Actions*
+   - Click the *Secrets* tab
+   - Create a new secret with the key `PAYSTACK_TEST_SECRET_KEY` and the actual key as the value.
       - TODO: Add steps
    
    This is necessary because the GitHub Actions 
