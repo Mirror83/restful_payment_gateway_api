@@ -134,4 +134,32 @@ Do so with a reference you get from calling the Initialise Payment endpoint
 with your own Paystack test secret key.
 
 ## Deployment
+As mentioned before, the application is hosted on Render. The blueprint configuration is in
+[render.yaml](render.yaml), and the build script is [build.sh](build.sh).
+Check the documentation on 
+[how to deploy Django applications to Render](https://render.com/docs/deploy-django#deploying-to-render)
+for more details on how the configuration of the two files.
+
+The configuration I have is a bit simpler in that it removes migrations from the build script, and the
+database service from the blueprint config, as the application does not need it.
+
+To deploy:
+1. You first need to have your repository on a Git hosting service like GitHub.
+   Create the repository, and before continuing the deployment process, you need to add the Paystack test secret
+   key as a repository secret.
+   To do this:
+      - TODO: Add steps
+   
+   This is necessary because the GitHub Actions 
+   [workflow for testing the Django application](.github/workflows/django.yml) 
+   adds the key to the CI environment to allow the tests to run well 
+   (as described in the [tests section](#tests)).
+   
+   You can then push the code to the remote repository if you haven't yet.
+
+2. Then create a blueprint deployment on Render, connecting Render to your repo. 
+   After a few minutes, the application should be deployed. Try accessing it as described [above](#local-setup).
+3. On the settings page of the web service created from the blueprint, change the deployment option from
+   `On commit` to `After CI checks pass` to prevent deployment when the tests 
+   (the only check in the CI currently) fail.
 
