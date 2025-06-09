@@ -1,10 +1,11 @@
 import os
 
 import httpx
-from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from rest_framework.parsers import JSONParser
+from rest_framework.decorators import api_view
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from api.paystack_serializers import PaystackTransactionStatusResponse
 from api.serializers import PaymentInfo, PaystackTransactionInitResponse
@@ -21,15 +22,13 @@ def get_paystack_client():
 
 
 @csrf_exempt
-def initialize_payment(request: HttpRequest):
-    if request.method != "POST":
-        return HttpResponse(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
+@api_view(["POST"])
+def initialize_payment(request: Request):
     # Validate request body data
-    data = JSONParser().parse(request)
-    serializer = PaymentInfo(data=data)
+    data = request.data
+    serializer = PaymentInfo(data=request.data)
     if not serializer.is_valid():
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     with get_paystack_client() as client:
         request_data = {
@@ -39,23 +38,22 @@ def initialize_payment(request: HttpRequest):
         }
         response = client.post("/transaction/initialize", json=request_data)
 
-        if not response.is_success:
-            return JsonResponse(response.json(), status=status.HTTP_400_BAD_REQUEST)
         data = response.json()
+
+        if not response.is_success:
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         # Validate Paystack API call response data
         paystack_response_serializer = PaystackTransactionInitResponse(data=data)
         if not paystack_response_serializer.is_valid():
-            return JsonResponse(paystack_response_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(paystack_response_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # Everything went well, build response
-        return JsonResponse(paystack_response_serializer.data, status=status.HTTP_200_OK)
+        return Response(paystack_response_serializer.data, status=status.HTTP_200_OK)
 
 
-def get_payment_status(request: HttpRequest, payment_id: str):
-    if request.method != "GET":
-        return HttpResponse(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
+@api_view(["GET"])
+def get_payment_status(request: Request, payment_id: str):
     with get_paystack_client() as client:
         # Call Paystack API to retrieve payment status
         response = client.get(f"/transaction/verify/{payment_id}")
@@ -64,19 +62,19 @@ def get_payment_status(request: HttpRequest, payment_id: str):
         data = response.json()
         if not response.is_success:
             if data["code"] == "transaction_not_found":
-                return JsonResponse(
+                return Response(
                     {
                         "payment_id": payment_id,
                         "status": "failed",
                         "message": "Payment with the given payment id not found"
                     },
                     status=status.HTTP_404_NOT_FOUND)
-            return JsonResponse(
+            return Response(
                 {"payment_id": payment_id, "status": "failed"},
                 status=status.HTTP_400_BAD_REQUEST)
 
         serializer = PaystackTransactionStatusResponse(data=data)
         if not serializer.is_valid():
-            return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return JsonResponse(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
