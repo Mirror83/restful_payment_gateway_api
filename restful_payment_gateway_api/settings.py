@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     # 'django.contrib.staticfiles',
     "rest_framework",
     "api",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -59,20 +60,20 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'restful_payment_gateway_api.urls'
 
-# TEMPLATES = [
-#     {
-#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-#         'DIRS': [],
-#         'APP_DIRS': True,
-#         'OPTIONS': {
-#             'context_processors': [
-#                 'django.template.context_processors.request',
-#                 'django.contrib.auth.context_processors.auth',
-#                 'django.contrib.messages.context_processors.messages',
-#             ],
-#         },
-#     },
-# ]
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 WSGI_APPLICATION = 'restful_payment_gateway_api.wsgi.application'
 
@@ -128,3 +129,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 # DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# REST FRAMEWORK
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# DRF SPECTACULAR
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Payment Gateway API",
+    "DESCRIPTION": "A simple payment gateway API",
+    "VERSION": "1.0.0",
+}

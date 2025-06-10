@@ -1,10 +1,10 @@
 import os
 
 import httpx
-from rest_framework import status
+from drf_spectacular.utils import extend_schema
+from rest_framework import status, generics
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from api.paystack_serializers import PaystackTransactionStatusResponse
 from api.serializers import PaymentInfo, PaystackTransactionInitResponse
@@ -19,7 +19,8 @@ def get_paystack_client():
     }
     return httpx.Client(base_url=PAYSTACK_API_URL, headers=headers)
 
-class InitPaymentView(APIView):
+@extend_schema(request = PaymentInfo, responses = PaystackTransactionInitResponse)
+class InitPaymentView(generics.GenericAPIView):
     def post(self, request: Request):
         """Initialize payment given the request data"""
         # Validate request body data
@@ -49,7 +50,8 @@ class InitPaymentView(APIView):
             # Everything went well, build response
             return Response(paystack_response_serializer.data, status=status.HTTP_200_OK)
 
-class GetPaymentStatusView(APIView):
+@extend_schema(responses = PaystackTransactionStatusResponse)
+class GetPaymentStatusView(generics.GenericAPIView):
     def get(self, request: Request, payment_id: str):
         """Handle POST request for payment status"""
         with get_paystack_client() as client:
