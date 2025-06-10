@@ -57,8 +57,6 @@ class GetPaymentStatusView(generics.GenericAPIView):
         with get_paystack_client() as client:
             # Call Paystack API to retrieve payment status
             response = client.get(f"/transaction/verify/{payment_id}")
-            print(f"{response.status_code=}")
-
             data = response.json()
             if not response.is_success:
                 if data["code"] == "transaction_not_found":
