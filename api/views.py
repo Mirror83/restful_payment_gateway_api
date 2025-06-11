@@ -1,4 +1,5 @@
 import os
+from json import JSONDecodeError
 
 import httpx
 from drf_spectacular.utils import extend_schema
@@ -6,8 +7,8 @@ from rest_framework import status, generics
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from api.paystack_serializers import PaystackTransactionStatusResponse
-from api.serializers import PaymentInfo, PaystackTransactionInitResponse
+from api.paystack_serializers import PaystackTransactionStatusResponseSerializer
+from api.serializers import PaymentInfoSerializer, PaystackTransactionInitResponseSerializer
 
 PAYSTACK_API_URL = "https://api.paystack.co"
 
@@ -19,38 +20,49 @@ def get_paystack_client():
     }
     return httpx.Client(base_url=PAYSTACK_API_URL, headers=headers)
 
-@extend_schema(request = PaymentInfo, responses = PaystackTransactionInitResponse)
+@extend_schema(request = PaymentInfoSerializer, responses = PaystackTransactionInitResponseSerializer)
 class InitPaymentView(generics.GenericAPIView):
     def post(self, request: Request):
         """Initialize payment given the request data"""
         # Validate request body data
-        data = request.data
-        serializer = PaymentInfo(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        request_serializer = PaymentInfoSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request_serializer.to_data_class()
 
         with get_paystack_client() as client:
-            request_data = {
-                "email": data["customer_email"],
+            paystack_request_data = {
+                "email": data.customer_email,
                 # Multiply by 100 to convert into Paystack subunits
-                "amount": int(data["amount"] * 100)
+                "amount": int(data.amount * 100)
             }
-            response = client.post("/transaction/initialize", json=request_data)
+            paystack_response = client.post("/transaction/initialize", json=paystack_request_data)
 
-            data = response.json()
+            if not paystack_response.is_success:
+                try:
+                    return Response(paystack_response.json(), status=status.HTTP_400_BAD_REQUEST)
+                except JSONDecodeError as e:
+                    # In case the error is one without a JSON response body (e.g. 5xx)
+                    print(e)
+                    return Response(
+                        {"status": False, "message": "Server error", "data": {}},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
 
-            if not response.is_success:
-                return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
+            data = paystack_response.json()
             # Validate Paystack API call response data
-            paystack_response_serializer = PaystackTransactionInitResponse(data=data)
+            paystack_response_serializer = PaystackTransactionInitResponseSerializer(data=data)
             if not paystack_response_serializer.is_valid():
-                return Response(paystack_response_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    paystack_response_serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST)
 
-            # Everything went well, build response
+            # Everything is OK, save payment and send response
             return Response(paystack_response_serializer.data, status=status.HTTP_200_OK)
 
-@extend_schema(responses = PaystackTransactionStatusResponse)
+@extend_schema(responses = PaystackTransactionStatusResponseSerializer)
 class GetPaymentStatusView(generics.GenericAPIView):
     def get(self, request: Request, payment_id: str):
         """Handle POST request for payment status"""
@@ -71,7 +83,7 @@ class GetPaymentStatusView(generics.GenericAPIView):
                     {"payment_id": payment_id, "status": "failed"},
                     status=status.HTTP_400_BAD_REQUEST)
 
-            serializer = PaystackTransactionStatusResponse(data=data)
+            serializer = PaystackTransactionStatusResponseSerializer(data=data)
             if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

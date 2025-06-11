@@ -1,28 +1,50 @@
 from rest_framework import serializers
+from dataclasses import dataclass
+
+@dataclass
+class PaystackTransactionInitData:
+    authorization_url: str
+    reference: str
+
+@dataclass
+class PaystackTransactionInitResponse:
+    status: bool
+    message: str
+    data: PaystackTransactionInitData
 
 
-class BasePaystackResponse(serializers.Serializer):
+class BasePaystackResponseSerializer(serializers.Serializer):
     status = serializers.BooleanField()
     message = serializers.CharField()
 
-class PaystackTransactionInitData(serializers.Serializer):
+class PaystackTransactionInitDataSerializer(serializers.Serializer):
     authorization_url = serializers.URLField()
     reference = serializers.CharField()
 
-class PaystackTransactionInitResponse(BasePaystackResponse):
-    data = PaystackTransactionInitData()
+    def to_data_class(self):
+        return PaystackTransactionInitData(**self.data)
 
-class PaystackTransactionStatusData(serializers.Serializer):
+class PaystackTransactionInitResponseSerializer(BasePaystackResponseSerializer):
+    data = PaystackTransactionInitDataSerializer()
+
+    def to_data_class(self):
+        return PaystackTransactionInitResponse(
+            self.validated_data['status'],
+            self.validated_data['message'],
+            **self.validated_data['data'],
+        )
+
+class PaystackTransactionStatusDataSerializer(serializers.Serializer):
     domain = serializers.CharField()
     status = serializers.CharField()
     reference = serializers.CharField()
     # When querying the status of a payment that is yet to be made
-    # has failed, or has been abandoned, `paid_at` will be null.
+    # has failed or has been abandoned, `paid_at` will be null.
     paid_at = serializers.DateTimeField(allow_null=True)
     created_at = serializers.DateTimeField()
     channel = serializers.CharField()
     currency = serializers.CharField()
     amount = serializers.DecimalField(max_digits=10, decimal_places=2)
 
-class PaystackTransactionStatusResponse(BasePaystackResponse):
-    data = PaystackTransactionStatusData()
+class PaystackTransactionStatusResponseSerializer(BasePaystackResponseSerializer):
+    data = PaystackTransactionStatusDataSerializer()
