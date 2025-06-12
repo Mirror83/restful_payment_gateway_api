@@ -19,8 +19,6 @@ class InitPaymentViewTests(SimpleTestCase):
         self.invalid_data = {
             "amount": "invalid_amount"
         }
-        # Replace this with your own valid IDs (Paystack references) for testing
-        self.failed_payment_id = "wqh23pahb3"
 
     def test_valid_data(self):
         """Test initialize_payment with valid data"""
@@ -68,13 +66,6 @@ class InitPaymentViewTests(SimpleTestCase):
         self.assertTrue(response_data['status'])
         self.assertIsNone(response_data["data"]["paid_at"])
 
-    def test_failed_payment(self):
-        get_status_url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.failed_payment_id})
-        get_status_response = self.client.get(get_status_url)
-        response_data = get_status_response.json()
-        self.assertTrue(response_data["status"])
-        self.assertEqual(response_data["data"]["status"], "failed")
-
     def test_get_method(self):
         """Test initialize_payment with the GET method (should fail)"""
         response = self.client.get(init_payment_url)
@@ -84,10 +75,13 @@ class InitPaymentViewTests(SimpleTestCase):
 class GetPaymentStatusViewTests(SimpleTestCase):
     def setUp(self):
         self.client = Client()
-        # Replace this with your own valid IDs (Paystack references) for testing
+        # Replace the two ids below
+        # with your own valid ids (Paystack references) for testing
         self.valid_payment_id = "m392r2dbbn"
+        self.failed_payment_id = "wqh23pahb3"
 
         self.invalid_payment_id = "test-payment-id"
+
 
     def test_valid_id(self):
         """Test get_payment_status with valid payment ID"""
@@ -103,6 +97,13 @@ class GetPaymentStatusViewTests(SimpleTestCase):
         url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.invalid_payment_id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_failed_payment(self):
+        get_status_url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.failed_payment_id})
+        get_status_response = self.client.get(get_status_url)
+        response_data = get_status_response.json()
+        self.assertTrue(response_data["status"])
+        self.assertEqual(response_data["data"]["status"], "failed")
 
     def test_post_method(self):
         """Test get_payment_status with the POST method (should fail)"""
