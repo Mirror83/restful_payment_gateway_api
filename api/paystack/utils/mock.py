@@ -3,6 +3,8 @@ from datetime import datetime
 
 import httpx
 
+from api.paystack.utils.sample_responses import init_payment_200_OK, verify_200_OK
+
 
 def mock_paystack_handler(request: httpx.Request) -> httpx.Response:
     """Mock handler for Paystack API requests"""
@@ -10,14 +12,11 @@ def mock_paystack_handler(request: httpx.Request) -> httpx.Response:
     # Handle payment initialisation
     if request.method == "POST" and request.url.path == "/transaction/initialize":
         request_data = json.loads(request.content.decode())
-        response_data = {
-            "status": True,
-            "message": "Authorization URL created",
-            "data": {
-                "authorization_url": "https://checkout.paystack.com/mock-reference-123",
-                "reference": f"mock-ref-{request_data.get('email', 'test').replace('@', '-at-')}-{request_data.get('amount', 3000)}"
-            }
-        }
+        response_data = init_payment_200_OK
+        response_data["data"]["reference"] = \
+            f"mock-ref-{request_data.get('email', 'test').replace('@', '-at-')}-{request_data.get('amount', 3000)}"
+        response_data["data"]["authorization_url"] = f"https://checkout.paystack.com/mock-reference-123"
+
         return httpx.Response(200, json=response_data)
 
     # Handle payment status verification
@@ -34,39 +33,21 @@ def mock_paystack_handler(request: httpx.Request) -> httpx.Response:
             return httpx.Response(404, json=response_data)
 
         elif "failed" in payment_id.lower():
-            response_data = {
-                "status": True,
-                "message": "Verification successful",
-                "data": {
-                    "domain": "test",
-                    "status": "failed",
-                    "reference": payment_id,
-                    "paid_at": None,
-                    "created_at": datetime.now().isoformat(),
-                    "channel": "card",
-                    "currency": "KES",
-                    "amount": "3000.00"
-                }
-            }
+            response_data = verify_200_OK
+            response_data["data"]["status"] = "failed"
+            response_data["data"]["paid_at"] = None
+
             return httpx.Response(200, json=response_data)
 
         else:
             # Mock successful or pending payment
             paid_at = None if "mock-ref" in payment_id else datetime.now().isoformat()
-            response_data = {
-                "status": True,
-                "message": "Verification successful",
-                "data": {
-                    "domain": "test",
-                    "status": "success" if paid_at else "pending",
-                    "reference": payment_id,
-                    "paid_at": paid_at,
-                    "created_at": datetime.now().isoformat(),
-                    "channel": "card",
-                    "currency": "KES",
-                    "amount": "3000.00"
-                }
-            }
+            response_data = verify_200_OK
+            response_data["data"]["status"] = "success" if paid_at else "abandoned"
+            response_data["data"]["reference"] = payment_id
+            response_data["data"]["paid_at"] = paid_at
+            response_data["data"]["created_at"] = datetime.now().isoformat()
+
             return httpx.Response(200, json=response_data)
 
     # Default response for unknown endpoints
