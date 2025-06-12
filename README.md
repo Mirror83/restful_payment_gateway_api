@@ -108,33 +108,12 @@ The test can be divided into the following categories:
 2. Validation for incorrect input parameters
 3. Validation for correct input parameters
 
-A note about the tests (some in category 2 and all that fall under 3)
-is that they make actual calls to the Paystack API, as the calls to
-the Paystack API are not mocked. I was thinking of mocking them, but there's no need since 
-the payments are simulated in the provider's test environment.
-
-However, this means that an internet connection is required for the tests to pass, and the
-PAYSTACK_TEST_SECRET_KEY environment variable must be set to a valid value.
-
 The tests can be run as follows (ensure the virtual environment is activated first):
 ```bash
 python manage.py test
 ```
 
 Alternatively, you can use your IDE to run the tests if you have configured it to do so.
-
-**N/B:** Make sure to replace the value for `self.valid_payment_id` here:
-```python
-from django.test import SimpleTestCase, Client
-class GetPaymentStatusViewTests(SimpleTestCase):
-    def setUp(self):
-        self.client = Client()
-        self.valid_payment_id = "m392r2dbbn"  # Replace this
-        self.invalid_payment_id = "test-payment-id"
-```
-
-Do so with a reference you get from calling the Initialise Payment endpoint
-with your own Paystack test secret key.
 
 ## Deployment
 As mentioned before, the application is hosted on Render. The blueprint configuration is in
@@ -148,28 +127,15 @@ database service from the blueprint config, as the application does not need it.
 
 To deploy:
 1. You first need to have your repository on a Git hosting service like GitHub.
-   Create the repository, and before continuing the deployment process, you need to add the Paystack test secret
-   key as a repository secret.
-   To do this:
-   - Got to the settings page of your repository
-   - In the security section of the sidebar select *Secrets and Variables* and then click *Actions*
-   - Click the *Secrets* tab
-   - Create a new secret with the key `PAYSTACK_TEST_SECRET_KEY` and the actual key as the value.
-   
-   This is necessary because the GitHub Actions 
-   [workflow for testing the Django application](.github/workflows/django.yml) 
-   adds the key to the CI environment to allow the tests to run well 
-   (as described in the [tests section](#tests)).
-   
-   You can then push the code to the remote repository if you haven't yet.
-
 2. Then create a blueprint deployment on Render, connecting Render to your repo. 
-   After a few minutes, the application should be deployed. Try accessing it as described [above](#local-setup).
+   After a few minutes, the application should be deployed. 
+   Try accessing it as described [above](#local-setup).
 3. On the settings page of the web service created from the blueprint, change the deployment option from
    `On commit` to `After CI checks pass` to prevent deployment when the tests 
    (the only check in the CI currently) fail.
 
 **N/B:** If your service does not get traffic frequently, Render puts the service to sleep
-(if you are on the free plan), so sometimes you may get a `502 Bad Gateway` 
-for a few minutes before the service is restarted.
+(if you are on the free plan), so sometimes you may get a `502 Bad Gateway` or a 
+`503 Service Unavailable` for a few minutes before the service is restarted,
+or the first request may just take a little longer than the others.
 
