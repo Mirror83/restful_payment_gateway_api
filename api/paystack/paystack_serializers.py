@@ -1,35 +1,4 @@
 from rest_framework import serializers
-from dataclasses import dataclass
-
-@dataclass
-class PaystackTransactionInitData:
-    authorization_url: str
-    reference: str
-
-@dataclass
-class PaystackTransactionInitResponse:
-    status: bool
-    message: str
-    data: PaystackTransactionInitData
-
-@dataclass
-class PaystackTransactionStatusData:
-    domain: str
-    status: str
-    reference: str
-    paid_at: str | None
-    created_at: str
-    channel: str
-    currency: str
-    amount: float
-
-@dataclass
-class PaystackTransactionStatusResponse:
-    status: bool
-    message: str
-    data: PaystackTransactionStatusData
-
-
 
 class BasePaystackResponseSerializer(serializers.Serializer):
     status = serializers.BooleanField()
@@ -39,18 +8,8 @@ class PaystackTransactionInitDataSerializer(serializers.Serializer):
     authorization_url = serializers.URLField()
     reference = serializers.CharField()
 
-    def to_data_class(self):
-        return PaystackTransactionInitData(**self.data)
-
 class PaystackTransactionInitResponseSerializer(BasePaystackResponseSerializer):
     data = PaystackTransactionInitDataSerializer()
-
-    def to_data_class(self):
-        return PaystackTransactionInitResponse(
-            self.validated_data['status'],
-            self.validated_data['message'],
-            **self.validated_data['data'],
-        )
 
 class PaystackTransactionStatusDataSerializer(serializers.Serializer):
     domain = serializers.CharField()
@@ -66,9 +25,3 @@ class PaystackTransactionStatusDataSerializer(serializers.Serializer):
 
 class PaystackTransactionStatusResponseSerializer(BasePaystackResponseSerializer):
     data = PaystackTransactionStatusDataSerializer()
-    def to_data_class(self):
-        return PaystackTransactionStatusResponse(
-            self.validated_data['status'],
-            self.validated_data['message'],
-            **self.validated_data['data'],
-        )
