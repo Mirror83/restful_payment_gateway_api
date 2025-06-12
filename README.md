@@ -5,6 +5,9 @@ The `api` package contains the application code,
 `restful_payment_gateway_api` package contains configuration for the Django project.
 
 The API is hosted on [Render](https://render.com/) at https://restful-payment-gateway-api.onrender.com.
+The documentation can be found at:
+- https://restful-payment-gateway-api.onrender.com/api/v1/schema/swagger-ui (Swagger-UI)
+- https://restful-payment-gateway-api.onrender.com/api/v1/schema/redoc (Redoc)
 It has the following two endpoints as per the [specification](task.md):
 - GET `/api/v1/payments/{id}`
 - POST `/api/v1/payments/`
