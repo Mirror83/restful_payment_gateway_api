@@ -17,19 +17,38 @@ def get_paystack_client(base_url: str, secret_key: str) -> httpx.Client:
     }
     return httpx.Client(base_url=base_url, headers=headers)
 
+
 class PaystackClientException(Exception):
-    def __init__(self, *args, data = None, status_code = status.HTTP_400_BAD_REQUEST):
+    def __init__(
+            self,
+            *args,
+            data=None,
+            status_code=status.HTTP_400_BAD_REQUEST):
         super().__init__(*args)
         self.data: dict | None = data
         self.status_code = status_code
 
+
 class PaystackClient:
+    """
+    A lightweight client for interacting with the Paystack API.
+    """
+
     def __init__(
-        self,
-        http_client_fun: Callable[[str, str], httpx.Client] = get_paystack_client,
-        secret_key: str = PAYSTACK_TEST_SECRET_KEY,
-        base_url: str = PAYSTACK_API_BASE_URL
+            self,
+            http_client_fun: Callable[[str, str], httpx.Client] = get_paystack_client,
+            secret_key: str = PAYSTACK_TEST_SECRET_KEY,
+            base_url: str = PAYSTACK_API_BASE_URL
     ):
+        """
+        Creates a new `PaystackClient` instance.
+        Parameters:
+            http_client_fun: A function that returns an `httpx.Client` instance that accepts a
+                with provided secret key and base URL to make requests to the Paystack API.
+                This can be swapped with a mock implementation for testing purposes.
+            secret_key: The secret key used to authenticate requests to the Paystack API.
+            base_url: The base URL used to make requests to the Paystack API.
+        """
         self._http_client_fun = http_client_fun
         self._secret_key = secret_key
         self._base_url = base_url
@@ -58,7 +77,7 @@ class PaystackClient:
             data = response.json()
             serializer = PaystackTransactionInitResponseSerializer(data=data)
             if not serializer.is_valid():
-                raise PaystackClientException(serializer.errors, status_code=status.HTTP_400_BAD_REQUEST)
+                raise PaystackClientException(serializer.errors)
 
             return serializer.validated_data
 
@@ -78,15 +97,10 @@ class PaystackClient:
 
                 print(data)
                 raise PaystackClientException(
-                    data={"payment_id": payment_id, "status": "failed"},
-                    status_code=status.HTTP_400_BAD_REQUEST)
+                    data={"payment_id": payment_id, "status": "failed"})
 
             serializer = PaystackTransactionStatusResponseSerializer(data=data)
             if not serializer.is_valid():
-                return PaystackClientException(
-                    data=serializer.errors,
-                    status_code=status.HTTP_400_BAD_REQUEST)
+                return PaystackClientException(data=serializer.errors)
 
             return serializer.validated_data
-
-
