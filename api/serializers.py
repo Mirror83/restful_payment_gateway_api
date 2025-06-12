@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from api.paystack_serializers import (
+from api.paystack.paystack_serializers import (
     PaystackTransactionStatusDataSerializer,
     PaystackTransactionInitResponseSerializer)
 

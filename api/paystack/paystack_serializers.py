@@ -12,6 +12,24 @@ class PaystackTransactionInitResponse:
     message: str
     data: PaystackTransactionInitData
 
+@dataclass
+class PaystackTransactionStatusData:
+    domain: str
+    status: str
+    reference: str
+    paid_at: str | None
+    created_at: str
+    channel: str
+    currency: str
+    amount: float
+
+@dataclass
+class PaystackTransactionStatusResponse:
+    status: bool
+    message: str
+    data: PaystackTransactionStatusData
+
+
 
 class BasePaystackResponseSerializer(serializers.Serializer):
     status = serializers.BooleanField()
@@ -48,3 +66,9 @@ class PaystackTransactionStatusDataSerializer(serializers.Serializer):
 
 class PaystackTransactionStatusResponseSerializer(BasePaystackResponseSerializer):
     data = PaystackTransactionStatusDataSerializer()
+    def to_data_class(self):
+        return PaystackTransactionStatusResponse(
+            self.validated_data['status'],
+            self.validated_data['message'],
+            **self.validated_data['data'],
+        )
