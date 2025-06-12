@@ -4,14 +4,29 @@ from django.urls import reverse
 from rest_framework import status
 import json
 
-from api.paystack.utils.mock import mock_paystack_client_factory
+from api.paystack.paystack_client import PaystackClient
+from api.paystack.utils.mock import get_mock_paystack_client
 
 init_payment_url = reverse("api:initialize_payment")
 payment_status_url_view_name = "api:get_payment_status"
 
-
-class InitPaymentViewTests(SimpleTestCase):
+class PaystackMockTestCase(SimpleTestCase):
     def setUp(self):
+        super().setUp()
+        self.client = Client()
+
+        self.mock_paystack_client_instance = PaystackClient(http_client_fun=get_mock_paystack_client)
+        self.paystack_patcher = patch('api.views.paystack_client', self.mock_paystack_client_instance)
+        self.paystack_patcher.start()
+
+    def tearDown(self):
+        super().tearDown()
+        self.paystack_patcher.stop()
+
+
+class InitPaymentViewTests(PaystackMockTestCase):
+    def setUp(self):
+        super().setUp()
         self.client = Client()
         self.valid_data = {
             "customer_name": "John Doe",
@@ -22,8 +37,7 @@ class InitPaymentViewTests(SimpleTestCase):
             "amount": "invalid_amount"
         }
 
-    @patch('api.views.paystack_client._http_client_fun', side_effect=mock_paystack_client_factory)
-    def test_valid_data(self, _mock_http_client_fun):
+    def test_valid_data(self):
         """Test initialize_payment with valid data"""
         response = self.client.post(
             init_payment_url,
@@ -32,7 +46,6 @@ class InitPaymentViewTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
-        print(response_data)
         self.assertTrue(response_data['status'])
         self.assertIn('data', response_data)
         self.assertIn('authorization_url', response_data['data'])
@@ -56,8 +69,7 @@ class InitPaymentViewTests(SimpleTestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch('api.views.paystack_client._http_client_fun', side_effect=mock_paystack_client_factory)
-    def test_initialized_but_incomplete_payment(self, _mock_http_client_fun):
+    def test_initialized_but_incomplete_payment(self):
         init_payment_response = self.client.post(
             init_payment_url,
             data=json.dumps(self.valid_data),
@@ -80,16 +92,16 @@ class InitPaymentViewTests(SimpleTestCase):
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class GetPaymentStatusViewTests(SimpleTestCase):
+class GetPaymentStatusViewTests(PaystackMockTestCase):
     def setUp(self):
+        super().setUp()
         self.client = Client()
         # Using mock payment IDs instead of real ones
         self.valid_payment_id = "mock-valid-payment-123"
         self.failed_payment_id = "mock-failed-payment-456"
         self.invalid_payment_id = "test-payment-id"
 
-    @patch('api.views.paystack_client._http_client_fun', side_effect=mock_paystack_client_factory)
-    def test_valid_id(self, _mock_http_client_fun):
+    def test_valid_id(self):
         """Test get_payment_status with valid payment ID"""
         url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.valid_payment_id})
         response = self.client.get(url)
@@ -98,15 +110,13 @@ class GetPaymentStatusViewTests(SimpleTestCase):
         self.assertEqual(response_data["data"]["reference"], self.valid_payment_id)
         self.assertEqual(response_data["status"], True)
 
-    @patch('api.views.paystack_client._http_client_fun', side_effect=mock_paystack_client_factory)
-    def test_invalid_id(self, _mock_http_client_fun):
+    def test_invalid_id(self):
         """Test get_payment_status with invalid payment ID"""
         url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.invalid_payment_id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @patch('api.views.paystack_client._http_client_fun', side_effect=mock_paystack_client_factory)
-    def test_failed_payment(self, _mock_http_client_fun):
+    def test_failed_payment(self):
         get_status_url = reverse(payment_status_url_view_name, kwargs={"payment_id": self.failed_payment_id})
         get_status_response = self.client.get(get_status_url)
         response_data = get_status_response.json()

@@ -73,7 +73,7 @@ def mock_paystack_handler(request: httpx.Request) -> httpx.Response:
     return httpx.Response(404, json={"status": False, "message": "Endpoint not found"})
 
 
-def mock_paystack_client_factory(base_url: str, secret_key: str):
+def get_mock_paystack_client(base_url: str, secret_key: str):
     """Factory function that returns httpx client with mock transport"""
     headers = {
         "Authorization": f"Bearer {secret_key}",
