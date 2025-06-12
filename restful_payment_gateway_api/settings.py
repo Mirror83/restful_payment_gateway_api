@@ -141,3 +141,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "A simple payment gateway API",
     "VERSION": "1.0.0",
 }
+
+# Paystack
+PAYSTACK_TEST_SECRET_KEY = os.environ["PAYSTACK_TEST_SECRET_KEY"]
+PAYSTACK_API_BASE_URL = "https://api.paystack.co"

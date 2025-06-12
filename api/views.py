@@ -1,4 +1,3 @@
-import os
 from json import JSONDecodeError
 
 import httpx
@@ -9,16 +8,15 @@ from rest_framework.response import Response
 
 from api.paystack_serializers import PaystackTransactionStatusResponseSerializer
 from api.serializers import PaymentInfoSerializer, PaystackTransactionInitResponseSerializer
-
-PAYSTACK_API_URL = "https://api.paystack.co"
+from restful_payment_gateway_api.settings import PAYSTACK_TEST_SECRET_KEY, PAYSTACK_API_BASE_URL
 
 
 def get_paystack_client():
     headers = {
-        "Authorization": f"Bearer {os.environ.get('PAYSTACK_TEST_SECRET_KEY')}",
+        "Authorization": f"Bearer {PAYSTACK_TEST_SECRET_KEY}",
         "Content-Type": "application/json",
     }
-    return httpx.Client(base_url=PAYSTACK_API_URL, headers=headers)
+    return httpx.Client(base_url=PAYSTACK_API_BASE_URL, headers=headers)
 
 @extend_schema(request = PaymentInfoSerializer, responses = PaystackTransactionInitResponseSerializer)
 class InitPaymentView(generics.GenericAPIView):
