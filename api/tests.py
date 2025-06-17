@@ -27,7 +27,6 @@ class PaystackMockTestCase(SimpleTestCase):
 class InitPaymentViewTests(PaystackMockTestCase):
     def setUp(self):
         super().setUp()
-        self.client = Client()
         self.valid_data = {
             "customer_name": "John Doe",
             "customer_email": "john@example.com",
@@ -95,7 +94,6 @@ class InitPaymentViewTests(PaystackMockTestCase):
 class GetPaymentStatusViewTests(PaystackMockTestCase):
     def setUp(self):
         super().setUp()
-        self.client = Client()
         # Using mock payment IDs instead of real ones
         self.valid_payment_id = "mock-valid-payment-123"
         self.failed_payment_id = "mock-failed-payment-456"
